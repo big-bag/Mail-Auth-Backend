@@ -95,7 +95,29 @@ date.timezone = Europe/Moscow
 sudo systemctl restart httpd.service
 ```
 
-4. create a directory and locate script there
+4. create a directory and locate two scripts here
+`md5cram.pl` - script that takes as input username, password and word (taken from mail server in auth cram-md5 step) and converts them to a string in base64 format.
+`auth.php` - auth script.
+```
+sudo pacman -S extra/perl-digest-hmac
+nano /srv/http/mail/md5cram.pl
+```
+```
+#!/usr/bin/perl -W
+ 
+use strict;
+use MIME::Base64 qw(encode_base64 decode_base64);
+use Digest::HMAC_MD5;
+ 
+die "Usage: $0 username password ticket\n" unless $#ARGV == 2;
+ 
+my ($username, $password, $ticket64) = @ARGV;
+ 
+my $ticket = decode_base64($ticket64) or
+die ("Unable to decode Base64 encoded string '$ticket64'\n");
+my $password_md5 = Digest::HMAC_MD5::hmac_md5_hex($ticket, $password);
+print encode_base64 ("$username $password_md5", "");
+```
 ```
 sudo mkdir /srv/http/mail
 sudo touch /srv/http/mail/auth.php
